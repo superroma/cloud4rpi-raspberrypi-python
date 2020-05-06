@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from time import sleep
+from os import environ
 import sys
 import random
 import cloud4rpi
@@ -10,8 +11,7 @@ import RPi.GPIO as GPIO  # pylint: disable=F0401
 
 # Put your device token here. To get the token,
 # sign up at https://cloud4rpi.io and create a device.
-DEVICE_TOKEN = '__YOUR_DEVICE_TOKEN__'
-
+DEVICE_TOKEN = environ.get('C4R_TOKEN')
 # Constants
 LED_PIN = 12
 
@@ -65,30 +65,9 @@ def main():
     # Put variable declarations here
     # Available types: 'bool', 'numeric', 'string', 'location'
     variables = {
-        'Room Temp': {
+        'Cellar Temp': {
             'type': 'numeric' if ds_sensors else 'string',
             'bind': ds_sensors[0] if ds_sensors else sensor_not_connected
-        },
-        # 'Outside Temp': {
-        #     'type': 'numeric' if ds_sensors else 'string',
-        #     'bind': ds_sensors[1] if ds_sensors else get_empty_value
-        # },
-        'LED On': {
-            'type': 'bool',
-            'value': False,
-            'bind': led_control
-        },
-        'CPU Temp': {
-            'type': 'numeric',
-            'bind': rpi.cpu_temp
-        },
-        'STATUS': {
-            'type': 'string',
-            'bind': listen_for_events
-        },
-        'Location': {
-            'type': 'location',
-            'bind': get_location
         }
     }
 
