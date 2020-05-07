@@ -2,64 +2,35 @@
 
 from time import sleep
 from os import environ
+from gpiozero import Button
 import sys
-import random
 import cloud4rpi
 import ds18b20
 import rpi
-import RPi.GPIO as GPIO  # pylint: disable=F0401
 
 # Put your device token here. To get the token,
 # sign up at https://cloud4rpi.io and create a device.
 DEVICE_TOKEN = environ.get('C4R_TOKEN')
+
 # Constants
-LED_PIN = 12
 
 DATA_SENDING_INTERVAL = 60  # secs
 DIAG_SENDING_INTERVAL = 90  # secs
 POLL_INTERVAL = 0.5  # 500 ms
 
-LOCATIONS = [
-    {'lat': 51.500741, 'lng': -0.124626},  # Big Ben, London, United Kingdom
-    {'lat': 40.689323, 'lng': -74.044503}  # Statue of Liberty, New York, USA
-]
-
-# Configure GPIO library
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(LED_PIN, GPIO.OUT)
-
-
-# Handler for the button or switch variable
-def led_control(value=None):
-    GPIO.output(LED_PIN, value)
-    return GPIO.input(LED_PIN)
-
-
-def listen_for_events():
-    # Write your own logic here
-    result = random.randint(1, 5)
-    if result == 1:
-        return 'RING'
-
-    if result == 5:
-        return 'BOOM'
-
-    return 'IDLE'
-
-
-def get_location():
-    return random.choice(LOCATIONS)
-
-
 def sensor_not_connected():
     return 'Sensor not connected'
 
+pulses = 0
+def increment_pulse():
+    global pulses
+    pulses = pulses+1
+
+def get_litres():
+    return 5
 
 def main():
-    # Load w1 modules
     ds18b20.init_w1()
-
-    # Detect ds18b20 temperature sensors
     ds_sensors = ds18b20.DS18b20.find_all()
 
     # Put variable declarations here
@@ -68,6 +39,10 @@ def main():
         'Cellar Temp': {
             'type': 'numeric' if ds_sensors else 'string',
             'bind': ds_sensors[0] if ds_sensors else sensor_not_connected
+        },
+        'Litres': {
+            'type': 'numeric',
+            'bind': get_litres,
         }
     }
 
