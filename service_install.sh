@@ -64,7 +64,7 @@ start() {
   # Clears the old log
   echo '--- Service started at' "\$(date)" '---' > "\$LOGFILE"
 
-  sudo -u \$RUNAS $PYTHON_PATH -u "\$SCRIPT" >> \$LOGFILE 2>>\$LOGFILE &
+  sudo -E -u \$RUNAS $PYTHON_PATH -u "\$SCRIPT" >> \$LOGFILE 2>>\$LOGFILE &
   PID=\$!
 
   ERROR_LEVEL=0
