@@ -41,15 +41,17 @@ last_call_sec = time()
 
 
 def get_litres():
+    if started:
+         return 0
+
     global last_call_sec
     global pulses
-    global started
     now_sec = time()
     liters = pulses / PULSE_PER_LITER
     liters_per_sec = liters / (now_sec - last_call_sec)
     last_call_sec = now_sec
     pulses = 0
-    return 0 if started else liters_per_sec
+    return liters_per_sec
 
 
 def main():
@@ -65,7 +67,7 @@ def main():
             "type": "numeric" if ds_sensors else "string",
             "bind": ds_sensors[0] if ds_sensors else sensor_not_connected,
         },
-        "Liters/Sec": {"type": "numeric", "bind": get_litres,},
+        "Liters/Sec": {"type": "numeric", "bind": get_litres},
     }
 
     diagnostics = {
@@ -96,9 +98,10 @@ def main():
 
         data_timer = 0
         diag_timer = 0
-
+        global started
         while True:
             if (data_timer <= 0) or (pulses > 0):
+                print("started", started)
                 if started:
                     device.publish_data()
                     started = False
