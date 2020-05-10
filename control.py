@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from time import sleep
+from time import sleep, time
 from os import environ
 from gpiozero import Button
 import sys
@@ -15,23 +15,36 @@ DEVICE_TOKEN = environ.get('C4R_TOKEN')
 # Constants
 
 DATA_SENDING_INTERVAL = 60  # secs
-DIAG_SENDING_INTERVAL = 90  # secs
+DIAG_SENDING_INTERVAL = 3600  # secs
 POLL_INTERVAL = 0.5  # 500 ms
+
+PULSE_PER_LITER = 500
+
 
 def sensor_not_connected():
     return 'Sensor not connected'
 
 pulses = 0
-def increment_pulse():
+def increment_pulses():
     global pulses
     pulses = pulses+1
 
+last_call_sec = time()
 def get_litres():
-    return 5
+    global last_call_sec
+    global pulses
+    now_sec = time()
+    liters = pulses/PULSE_PER_LITER
+    liters_per_sec = liters/(now_sec - last_call_sec)
+    last_call_sec = now_sec
+    pulses = 0
+    return liters_per_sec
 
 def main():
     ds18b20.init_w1()
     ds_sensors = ds18b20.DS18b20.find_all()
+    button = Button(17)
+    button.when_pressed = increment_pulses
 
     # Put variable declarations here
     # Available types: 'bool', 'numeric', 'string', 'location'
@@ -40,7 +53,7 @@ def main():
             'type': 'numeric' if ds_sensors else 'string',
             'bind': ds_sensors[0] if ds_sensors else sensor_not_connected
         },
-        'Litres': {
+        'Liters/Sec': {
             'type': 'numeric',
             'bind': get_litres,
         }
@@ -76,7 +89,7 @@ def main():
         diag_timer = 0
 
         while True:
-            if data_timer <= 0:
+            if (data_timer <= 0) or (pulses > 0):
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
 

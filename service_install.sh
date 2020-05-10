@@ -49,7 +49,7 @@ put_systemv_script(){
 ### END INIT INFO
 
 SCRIPT=$SCRIPT_PATH
-RUNAS=root
+RUNAS=pi
 
 PIDFILE=/var/run/$SERVICE_NAME.pid
 LOGFILE=/var/log/$SERVICE_NAME.log
