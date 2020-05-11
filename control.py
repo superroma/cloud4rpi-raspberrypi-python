@@ -49,18 +49,22 @@ def on_pulse(input):
 def on_tick():
     global beer_lines
     global trigger
+    any_line_pouring = False
     for k, beer_line in beer_lines.items():
-        if beer_line["pouring"] and (beer_line["pulses"] == 0):
-            trigger = True
-            beer_line["pouring"] = False
-            beer_line["lps"] = 0
-            beer_line["last_time"] = time()
+        if beer_line["pouring"]:
+            any_line_pouring = True
+            if beer_line["pulses"] == 0:
+                trigger = True
+                beer_line["pouring"] = False
+                beer_line["lps"] = 0
+                beer_line["last_time"] = time()
+    return any_line_pouring
 
 
 def calc_values():
     global beer_lines
     global trigger
-    print("calc trigger: ",trigger)
+    print("calc trigger: ", trigger)
     if trigger:
         return
 
@@ -81,7 +85,9 @@ def get_val(key):
             return beer_lines[pin_number][key]
 
         return get_key_pin
+
     return get_key
+
 
 def main():
     global beer_lines
@@ -136,12 +142,12 @@ def main():
         data_timer = 0
         diag_timer = 0
         while True:
-            on_tick()
-            if (data_timer <= 0) or trigger:
-                print("before calc")
+            pouring = on_tick()
+            if (data_timer <= 0) or trigger or pouring:
+                print("trigger: ", trigger, "pouring: ", pouring)
                 calc_values()
-                print("after calc")
-                trigger = False
+                if trigger:
+                    trigger = False
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
 
