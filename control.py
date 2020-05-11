@@ -148,6 +148,7 @@ def main():
                 calc_values()
                 if trigger:
                     trigger = False
+                print(beer_lines)
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
 
