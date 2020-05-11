@@ -60,20 +60,21 @@ def on_tick():
 def calc_values():
     global beer_lines
     global trigger
-
+    print("calc trigger: ",trigger)
     if trigger:
         return
 
     for k, beer_line in beer_lines.items():
+        print(beer_line)
         now_sec = time()
-        liters = pulses / PULSE_PER_LITER
+        liters = beer_line["pulses"] / PULSE_PER_LITER
         beer_line["liters"] = beer_line["liters"] + liters
         beer_line["lps"] = liters / (now_sec - beer_line["last_time"])
         beer_line["last_time"] = now_sec
         beer_line["pulses"] = 0
 
 
-def get_val(key)
+def get_val(key):
     def get_key(pin_number):
         def get_key_pin():
             global beer_lines
@@ -137,7 +138,9 @@ def main():
         while True:
             on_tick()
             if (data_timer <= 0) or trigger:
+                print("before calc")
                 calc_values()
+                print("after calc")
                 trigger = False
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
@@ -156,7 +159,7 @@ def main():
     except Exception as e:
         error = cloud4rpi.get_error_message(e)
         cloud4rpi.log.exception("ERROR! %s %s", error, sys.exc_info()[0])
-
+        print("ERRORRRRR", e)
     finally:
         sys.exit(0)
 
