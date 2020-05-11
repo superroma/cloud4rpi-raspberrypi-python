@@ -38,10 +38,12 @@ def on_pulse(input):
     global trigger
     beer_line = beer_lines[input.pin.number]
     if beer_line:
-        if beer_line["pulses"] == 0:
+        if !beer_line["pouring"]:
             trigger = True
             print("--------- reset lps on pulse ---------")
             beer_line["lps"] = 0
+
+        if (beer_line["pulses"] == 0):
             beer_line["last_time"] = time()
         beer_line["pouring"] = True
         beer_line["pulses"] = beer_line["pulses"] + 1
