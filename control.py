@@ -38,9 +38,9 @@ def on_pulse(input):
     global trigger
     beer_line = beer_lines[input.pin.number]
     if beer_line:
-        if !beer_line["pouring"]:
+        if not beer_line["pouring"]:
             trigger = True
-            print("--------- reset lps on pulse ---------")
+#            print("--------- reset lps on pulse ---------")
             beer_line["lps"] = 0
 
         if (beer_line["pulses"] == 0):
@@ -57,7 +57,7 @@ def on_tick():
         if beer_line["pouring"] and (beer_line["pulses"] == 0):
             trigger = True
             beer_line["pouring"] = False
-            print("--------- reset lps on tick ---------")
+#            print("--------- reset lps on tick ---------")
             beer_line["lps"] = 0
             beer_line["last_time"] = time()
         if beer_line["pouring"]:
@@ -76,7 +76,7 @@ def calc_values():
         now_sec = time()
         liters = beer_line["pulses"] / PULSE_PER_LITER
         beer_line["liters"] = beer_line["liters"] + liters
-        print("--------- calc lps  ---------")
+#        print("--------- calc lps  ---------")
 
         beer_line["lps"] = liters / (now_sec - beer_line["last_time"])
 #        print(beer_line)
@@ -84,21 +84,13 @@ def calc_values():
         beer_line["pulses"] = 0
 
 
-def get_val(key):
-    def get_key(pin_number):
-        def get_key_pin():
-            global beer_lines
-            return beer_lines[pin_number][key]
+def get_val(pin_number, key):
+    def get_key_pin():
+        global beer_lines
+        return beer_lines[pin_number][key]
 
-        return get_key_pin
+    return get_key_pin
 
-    return get_key
-
-def mylps():
-    global beer_lines
-    print("mylps    ", beer_lines)
-    print("mylps  return", beer_lines[17]["lps"])
-    return beer_lines[17]["lps"]
 
 def main():
     global beer_lines
@@ -118,10 +110,10 @@ def main():
             "type": "numeric" if ds_sensors else "string",
             "bind": ds_sensors[0] if ds_sensors else sensor_not_connected,
         },
-        "lps1": {"type": "numeric", "bind": mylps },
-        "lps2": {"type": "numeric", "bind": get_val("lps")(18)},
-        "liters1": {"type": "numeric", "bind": get_val("liters")(17)},
-        "liters2": {"type": "numeric", "bind": get_val("liters")(18)},
+        "lps1": {"type": "numeric", "bind": get_val(17, "lps") },
+        "lps2": {"type": "numeric", "bind": get_val(18, "lps")},
+        "liters1": {"type": "numeric", "bind": get_val(17, "liters")},
+        "liters2": {"type": "numeric", "bind": get_val(18, "liters")},
     }
 
     diagnostics = {
@@ -161,7 +153,7 @@ def main():
                 calc_values()
                 if trigger:
                     trigger = False
-                print("2222222   ",beer_lines)
+#                print("2222222   ",beer_lines)
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
 
