@@ -25,24 +25,33 @@ def sensor_not_connected():
     return "Sensor not connected"
 
 
-started = False
+trigger = False
+pouring = False
 pulses = 0
 
 
-def increment_pulses():
+def on_pulse():
     global pulses
-    global started
+    global trigger
+    global pouring
     if pulses == 0:
-        started = True
+        trigger = True
+    pouring = True
     pulses = pulses + 1
+
+
+def on_tick():
+    if pouring and (pulses == 0):
+        trigger = True
+        pouring = False
 
 
 last_call_sec = time()
 
 
 def get_litres():
-    if started:
-         return 0
+    if trigger:
+        return 0
 
     global last_call_sec
     global pulses
@@ -58,7 +67,7 @@ def main():
     ds18b20.init_w1()
     ds_sensors = ds18b20.DS18b20.find_all()
     button = Button(17)
-    button.when_pressed = increment_pulses
+    button.when_pressed = on_pulse
 
     # Put variable declarations here
     # Available types: 'bool', 'numeric', 'string', 'location'
@@ -100,11 +109,10 @@ def main():
         diag_timer = 0
         global started
         while True:
-            if (data_timer <= 0) or (pulses > 0):
-                print("started", started)
-                if started:
-                    device.publish_data()
-                    started = False
+            on_tick()
+            if (data_timer <= 0) or trigger:
+                print("trigger")
+                trigger = False
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
 
