@@ -25,51 +25,58 @@ def sensor_not_connected():
     return "Sensor not connected"
 
 
+# Globals
 trigger = False
-pouring = False
-pulses = 0
+beer_lines = {
+    17: {"pulses": 0, "pouring": False, "liters": 0, "lps": 0, "last_time": time(),},
+    18: {"pulses": 0, "pouring": False, "liters": 0, "lps": 0, "last_time": time(),},
+}
 
 
-def on_pulse():
-    global pulses
+def on_pulse(input):
+    global beer_lines
     global trigger
-    global pouring
-    if pulses == 0:
-        trigger = True
-    pouring = True
-    pulses = pulses + 1
+    beer_line = beer_lines[input.pin]
+    if beer_line:
+        if beer_line["pulses"] == 0:
+            trigger = True
+            beer_line["lps"] = 0
+            beer_line["last_time"] = time()
+        beer_line["pouring"] = True
+        beer_line["pulses"] = beer_line["pulses"] + 1
 
 
 def on_tick():
     global trigger
-    global pouring
-    if pouring and (pulses == 0):
-        trigger = True
-        pouring = False
+    global beer_lines
+    for k, beer_line in beer_lines.items():
+        if beer_line["pouring"] and (beer_line["pulses"] == 0):
+            trigger = True
+            beer_line["pouring"] = False
+            beer_line["lps"] = 0
+            beer_line["last_time"] = time()
 
 
-last_call_sec = time()
-
-
-def get_litres():
+def calc_values():
     if trigger:
-        return 0
+        return
 
-    global last_call_sec
-    global pulses
-    now_sec = time()
-    liters = pulses / PULSE_PER_LITER
-    liters_per_sec = liters / (now_sec - last_call_sec)
-    last_call_sec = now_sec
-    pulses = 0
-    return liters_per_sec
+    global beer_lines
+    for k, beer_line in beer_lines.items():
+        now_sec = time()
+        liters = pulses / PULSE_PER_LITER
+        beer_line["liters"] = beer_line["liters"] + liters
+        beer_line["lps"] = liters / (now_sec - beer_line["last_time"])
+        beer_line["last_time"] = now_sec
+        beer_line["pulses"] = 0
 
 
 def main():
     ds18b20.init_w1()
     ds_sensors = ds18b20.DS18b20.find_all()
-    button = Button(17)
-    button.when_pressed = on_pulse
+    for k, v in beer_lines:
+        button = Button(k)
+        button.when_pressed = on_pulse
 
     # Put variable declarations here
     # Available types: 'bool', 'numeric', 'string', 'location'
@@ -78,7 +85,10 @@ def main():
             "type": "numeric" if ds_sensors else "string",
             "bind": ds_sensors[0] if ds_sensors else sensor_not_connected,
         },
-        "Liters/Sec": {"type": "numeric", "bind": get_litres},
+        "lps1": {"type": "numeric", "bind": beer_lines[17]["lps"]},
+        "lps2": {"type": "numeric", "bind": beer_lines[18]["lps"]},
+        "liters1": {"type": "numeric", "bind": beer_lines[17]["liters"]},
+        "liters2": {"type": "numeric", "bind": beer_lines[18]["liters"]},
     }
 
     diagnostics = {
@@ -111,7 +121,6 @@ def main():
         diag_timer = 0
         global trigger
         while True:
-            print("tick")
             on_tick()
             if (data_timer <= 0) or trigger:
                 print("trigger:", trigger)
