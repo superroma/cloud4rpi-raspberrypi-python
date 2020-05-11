@@ -41,6 +41,8 @@ def on_pulse():
 
 
 def on_tick():
+    global trigger
+    global pouring
     if pouring and (pulses == 0):
         trigger = True
         pouring = False
@@ -107,11 +109,12 @@ def main():
 
         data_timer = 0
         diag_timer = 0
-        global started
+        global trigger
         while True:
+            print("tick")
             on_tick()
             if (data_timer <= 0) or trigger:
-                print("trigger")
+                print("trigger:", trigger)
                 trigger = False
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
