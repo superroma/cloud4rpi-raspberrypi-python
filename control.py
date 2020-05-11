@@ -40,6 +40,7 @@ def on_pulse(input):
     if beer_line:
         if beer_line["pulses"] == 0:
             trigger = True
+            print("--------- reset lps on pulse ---------")
             beer_line["lps"] = 0
             beer_line["last_time"] = time()
         beer_line["pouring"] = True
@@ -54,6 +55,7 @@ def on_tick():
         if beer_line["pouring"] and (beer_line["pulses"] == 0):
             trigger = True
             beer_line["pouring"] = False
+            print("--------- reset lps on tick ---------")
             beer_line["lps"] = 0
             beer_line["last_time"] = time()
         if beer_line["pouring"]:
@@ -72,8 +74,10 @@ def calc_values():
         now_sec = time()
         liters = beer_line["pulses"] / PULSE_PER_LITER
         beer_line["liters"] = beer_line["liters"] + liters
+        print("--------- calc lps  ---------")
+
         beer_line["lps"] = liters / (now_sec - beer_line["last_time"])
-        print(beer_line)
+#        print(beer_line)
         beer_line["last_time"] = now_sec
         beer_line["pulses"] = 0
 
@@ -88,6 +92,11 @@ def get_val(key):
 
     return get_key
 
+def mylps():
+    global beer_lines
+    print("mylps    ", beer_lines)
+    print("mylps  return", beer_lines[17]["lps"])
+    return beer_lines[17]["lps"]
 
 def main():
     global beer_lines
@@ -107,7 +116,7 @@ def main():
             "type": "numeric" if ds_sensors else "string",
             "bind": ds_sensors[0] if ds_sensors else sensor_not_connected,
         },
-        "lps1": {"type": "numeric", "bind": get_val("lps")(17)},
+        "lps1": {"type": "numeric", "bind": mylps },
         "lps2": {"type": "numeric", "bind": get_val("lps")(18)},
         "liters1": {"type": "numeric", "bind": get_val("liters")(17)},
         "liters2": {"type": "numeric", "bind": get_val("liters")(18)},
@@ -145,10 +154,12 @@ def main():
             pouring = on_tick()
             if (data_timer <= 0) or trigger or pouring:
                 print("trigger: ", trigger, "pouring: ", pouring)
+#                print("time: ", time())
+#                print("1111111   ",beer_lines)
                 calc_values()
                 if trigger:
                     trigger = False
-                print(beer_lines)
+                print("2222222   ",beer_lines)
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
 
@@ -166,7 +177,6 @@ def main():
     except Exception as e:
         error = cloud4rpi.get_error_message(e)
         cloud4rpi.log.exception("ERROR! %s %s", error, sys.exc_info()[0])
-        print("ERRORRRRR", e)
     finally:
         sys.exit(0)
 
