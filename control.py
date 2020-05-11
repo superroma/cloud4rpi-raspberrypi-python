@@ -36,7 +36,7 @@ beer_lines = {
 def on_pulse(input):
     global beer_lines
     global trigger
-    beer_line = beer_lines[input.pin]
+    beer_line = beer_lines[input.pin.number]
     if beer_line:
         if beer_line["pulses"] == 0:
             trigger = True
@@ -70,11 +70,17 @@ def calc_values():
         beer_line["last_time"] = now_sec
         beer_line["pulses"] = 0
 
+def get_lps(pin_number):
+    def get_lps_pin():
+        return beer_lines[pin_number]["lps"]
+    return get_lps_pin
 
 def main():
     ds18b20.init_w1()
     ds_sensors = ds18b20.DS18b20.find_all()
-    for k, v in beer_lines:
+
+    global beer_lines
+    for k, v in beer_lines.items():
         button = Button(k)
         button.when_pressed = on_pulse
 
@@ -85,8 +91,8 @@ def main():
             "type": "numeric" if ds_sensors else "string",
             "bind": ds_sensors[0] if ds_sensors else sensor_not_connected,
         },
-        "lps1": {"type": "numeric", "bind": beer_lines[17]["lps"]},
-        "lps2": {"type": "numeric", "bind": beer_lines[18]["lps"]},
+        "lps1": {"type": "numeric", "bind": get_lps(17) },
+        "lps2": {"type": "numeric", "bind": get_lps(18) },
         "liters1": {"type": "numeric", "bind": beer_lines[17]["liters"]},
         "liters2": {"type": "numeric", "bind": beer_lines[18]["liters"]},
     }
@@ -123,7 +129,7 @@ def main():
         while True:
             on_tick()
             if (data_timer <= 0) or trigger:
-                print("trigger:", trigger)
+                calc_values()
                 trigger = False
                 device.publish_data()
                 data_timer = DATA_SENDING_INTERVAL
