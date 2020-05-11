@@ -64,18 +64,18 @@ def on_tick():
 def calc_values():
     global beer_lines
     global trigger
-    print("calc trigger: ", trigger)
+
     if trigger:
         return
 
     for k, beer_line in beer_lines.items():
-        print(beer_line)
         now_sec = time()
         liters = beer_line["pulses"] / PULSE_PER_LITER
         beer_line["liters"] = beer_line["liters"] + liters
         beer_line["lps"] = liters / (now_sec - beer_line["last_time"])
         beer_line["last_time"] = now_sec
         beer_line["pulses"] = 0
+        print(beer_line)
 
 
 def get_val(key):
