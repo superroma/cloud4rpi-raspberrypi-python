@@ -47,8 +47,8 @@ def on_pulse(input):
 
 
 def on_tick():
-    global trigger
     global beer_lines
+    global trigger
     for k, beer_line in beer_lines.items():
         if beer_line["pouring"] and (beer_line["pulses"] == 0):
             trigger = True
@@ -58,10 +58,12 @@ def on_tick():
 
 
 def calc_values():
+    global beer_lines
+    global trigger
+
     if trigger:
         return
 
-    global beer_lines
     for k, beer_line in beer_lines.items():
         now_sec = time()
         liters = pulses / PULSE_PER_LITER
@@ -70,16 +72,23 @@ def calc_values():
         beer_line["last_time"] = now_sec
         beer_line["pulses"] = 0
 
-def get_lps(pin_number):
-    def get_lps_pin():
-        return beer_lines[pin_number]["lps"]
-    return get_lps_pin
+
+def get_val(key)
+    def get_key(pin_number):
+        def get_key_pin():
+            global beer_lines
+            return beer_lines[pin_number][key]
+
+        return get_key_pin
+    return get_key
 
 def main():
+    global beer_lines
+    global trigger
+
     ds18b20.init_w1()
     ds_sensors = ds18b20.DS18b20.find_all()
 
-    global beer_lines
     for k, v in beer_lines.items():
         button = Button(k)
         button.when_pressed = on_pulse
@@ -91,10 +100,10 @@ def main():
             "type": "numeric" if ds_sensors else "string",
             "bind": ds_sensors[0] if ds_sensors else sensor_not_connected,
         },
-        "lps1": {"type": "numeric", "bind": get_lps(17) },
-        "lps2": {"type": "numeric", "bind": get_lps(18) },
-        "liters1": {"type": "numeric", "bind": beer_lines[17]["liters"]},
-        "liters2": {"type": "numeric", "bind": beer_lines[18]["liters"]},
+        "lps1": {"type": "numeric", "bind": get_val("lps")(17)},
+        "lps2": {"type": "numeric", "bind": get_val("lps")(18)},
+        "liters1": {"type": "numeric", "bind": get_val("liters")(17)},
+        "liters2": {"type": "numeric", "bind": get_val("liters")(18)},
     }
 
     diagnostics = {
@@ -125,7 +134,6 @@ def main():
 
         data_timer = 0
         diag_timer = 0
-        global trigger
         while True:
             on_tick()
             if (data_timer <= 0) or trigger:
