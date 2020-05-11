@@ -51,13 +51,13 @@ def on_tick():
     global trigger
     any_line_pouring = False
     for k, beer_line in beer_lines.items():
+        if beer_line["pouring"] and (beer_line["pulses"] == 0):
+            trigger = True
+            beer_line["pouring"] = False
+            beer_line["lps"] = 0
+            beer_line["last_time"] = time()
         if beer_line["pouring"]:
             any_line_pouring = True
-            if beer_line["pulses"] == 0:
-                trigger = True
-                beer_line["pouring"] = False
-                beer_line["lps"] = 0
-                beer_line["last_time"] = time()
     return any_line_pouring
 
 
@@ -73,9 +73,9 @@ def calc_values():
         liters = beer_line["pulses"] / PULSE_PER_LITER
         beer_line["liters"] = beer_line["liters"] + liters
         beer_line["lps"] = liters / (now_sec - beer_line["last_time"])
+        print(beer_line)
         beer_line["last_time"] = now_sec
         beer_line["pulses"] = 0
-        print(beer_line)
 
 
 def get_val(key):
